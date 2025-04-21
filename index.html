@@ -1,13 +1,14 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Universal Video Downloader</title>
+    <title>GRAMY - Universal Video Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             --background: #ffffff;
             --text: #1f2937;
             --border: #e5e7eb;
@@ -15,6 +16,7 @@
 
         [data-theme="dark"] {
             --primary: #818cf8;
+            --gradient: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
             --background: #1a1a1a;
             --text: #f3f4f6;
             --border: #374151;
@@ -27,7 +29,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--background);
             color: var(--text);
             min-height: 100vh;
@@ -51,6 +53,16 @@
             margin-bottom: 2rem;
         }
 
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background-image: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+
         .platform-icons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
@@ -63,10 +75,13 @@
             border-radius: 8px;
             background: rgba(99, 102, 241, 0.1);
             text-align: center;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
         }
 
         .input-group {
             margin: 1.5rem 0;
+            position: relative;
         }
 
         input {
@@ -78,6 +93,7 @@
             background: transparent;
             color: var(--text);
             transition: border-color 0.3s ease;
+            font-family: 'Poppins', sans-serif;
         }
 
         input:focus {
@@ -88,18 +104,19 @@
         button {
             width: 100%;
             padding: 1rem;
-            background: var(--primary);
+            background: var(--gradient);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.3s ease;
+            transition: transform 0.2s ease;
+            font-family: 'Poppins', sans-serif;
         }
 
         button:active {
-            opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .result {
@@ -113,6 +130,7 @@
             width: 100%;
             border-radius: 8px;
             margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .download-link {
@@ -124,7 +142,16 @@
             color: var(--primary);
             word-break: break-all;
             margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            border: 2px solid var(--primary);
+            transition: background 0.3s ease;
         }
+
+        .download-link:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
         .error-solution {
             background: #ffebee;
             padding: 1rem;
@@ -133,7 +160,20 @@
             font-size: 0.9rem;
         }
 
-        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         @media (max-width: 480px) {
             .container {
@@ -142,6 +182,10 @@
                 width: calc(100% - 1rem);
             }
             
+            h1 {
+                font-size: 2rem;
+            }
+
             input, button {
                 padding: 0.8rem;
             }
@@ -151,7 +195,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Universal Video Downloader</h1>
+            <h1>GRAMY</h1>
             <div class="platform-icons">
                 <div class="platform-icon">🎵 TikTok</div>
                 <div class="platform-icon">📸 Instagram</div>
@@ -164,21 +208,32 @@
         <div class="input-group">
             <input type="text" id="videoUrl" placeholder="Paste video link here...">
             <button onclick="downloadVideo()">Download Video</button>
+            <button onclick="clearForm()" style="margin-top: 0.5rem; background: #6b7280;">
+                Clear
+            </button>
         </div>
 
         <div id="result"></div>
     </div>
 
     <script>
+        function isValidUrl(url) {
+            const pattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
+            return pattern.test(url);
+        }
+
         function downloadVideo() {
             const url = document.getElementById('videoUrl').value.trim();
             const resultDiv = document.getElementById('result');
+            const btn = document.querySelector('button[onclick="downloadVideo()"]');
             
-            if (!url) {
+            if (!isValidUrl(url)) {
                 showError('Please enter a valid video URL');
                 return;
             }
 
+            btn.disabled = true;
+            btn.innerHTML = 'Downloading...';
             showLoading();
 
             fetch('/download', {
@@ -196,11 +251,15 @@
                         </a>
                     `;
                 } else {
-                    showError(data.error || 'Failed to download video');
+                    showError(data.error || 'Failed to download video', data.solution);
                 }
             })
             .catch(error => {
                 showError('Network error. Please try again.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = 'Download Video';
             });
         }
 
@@ -213,16 +272,6 @@
             `;
         }
 
-        function showError(message) {
-            document.getElementById('result').innerHTML = `
-                <div style="color: #ef4444; padding: 1rem; text-align: center;">
-                    ⚠️ ${message}
-                </div>
-            `;
-        }
-
-
-
         function showError(message, solution) {
             const errorHTML = `
                 <div style="color: #ef4444; padding: 1rem; text-align: center;">
@@ -231,7 +280,8 @@
                         <div class="error-solution">
                             ${solution}
                             <br>
-                            <button onclick="window.open('https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp', '_blank')">
+                            <button style="margin-top: 0.5rem; background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer;"
+                                onclick="window.open('https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp', '_blank')">
                                 Learn How to Add Cookies
                             </button>
                         </div>
@@ -241,14 +291,10 @@
             document.getElementById('result').innerHTML = errorHTML;
         }
 
-        // Update the fetch catch block
-        .then(data => {
-            if (data.success) {
-                // ... existing code
-            } else {
-                showError(data.error, data.solution);
-            }
-        })
+        function clearForm() {
+            document.getElementById('videoUrl').value = '';
+            document.getElementById('result').innerHTML = '';
+        }
     </script>
 </body>
 </html>
