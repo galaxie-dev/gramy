@@ -1,0 +1,254 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Universal Video Downloader</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --background: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --background: #1a1a1a;
+            --text: #f3f4f6;
+            --border: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 1rem auto;
+            padding: 1.5rem;
+            width: 95%;
+            background: var(--background);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .platform-icons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .platform-icon {
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            text-align: center;
+        }
+
+        .input-group {
+            margin: 1.5rem 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: transparent;
+            color: var(--text);
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .thumbnail {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .download-link {
+            display: block;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--primary);
+            word-break: break-all;
+            margin: 1rem 0;
+        }
+        .error-solution {
+            background: #ffebee;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+                margin: 0.5rem;
+                width: calc(100% - 1rem);
+            }
+            
+            input, button {
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Universal Video Downloader</h1>
+            <div class="platform-icons">
+                <div class="platform-icon">🎵 TikTok</div>
+                <div class="platform-icon">📸 Instagram</div>
+                <div class="platform-icon">📺 YouTube</div>
+                <div class="platform-icon">📘 Facebook</div>
+                <div class="platform-icon">🐦 Twitter/X</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="Paste video link here...">
+            <button onclick="downloadVideo()">Download Video</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function downloadVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!url) {
+                showError('Please enter a valid video URL');
+                return;
+            }
+
+            showLoading();
+
+            fetch('/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ link: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        ${data.thumbnail ? `<img src="${data.thumbnail}" class="thumbnail" alt="Video thumbnail">` : ''}
+                        <a href="${data.downloadLink}" class="download-link" download>
+                            Download ${data.platform} Video
+                        </a>
+                    `;
+                } else {
+                    showError(data.error || 'Failed to download video');
+                }
+            })
+            .catch(error => {
+                showError('Network error. Please try again.');
+            });
+        }
+
+        function showLoading() {
+            document.getElementById('result').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="spinner"></div>
+                    <p>Downloading...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('result').innerHTML = `
+                <div style="color: #ef4444; padding: 1rem; text-align: center;">
+                    ⚠️ ${message}
+                </div>
+            `;
+        }
+
+
+
+        function showError(message, solution) {
+            const errorHTML = `
+                <div style="color: #ef4444; padding: 1rem; text-align: center;">
+                    ⚠️ ${message}
+                    ${solution ? `
+                        <div class="error-solution">
+                            ${solution}
+                            <br>
+                            <button onclick="window.open('https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp', '_blank')">
+                                Learn How to Add Cookies
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('result').innerHTML = errorHTML;
+        }
+
+        // Update the fetch catch block
+        .then(data => {
+            if (data.success) {
+                // ... existing code
+            } else {
+                showError(data.error, data.solution);
+            }
+        })
+    </script>
+</body>
+</html>
